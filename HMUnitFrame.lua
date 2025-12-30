@@ -191,20 +191,10 @@ function HMUnitFrame:UpdateAll()
     self:UpdateRaidMark()
 end
 
-function HMUnitFrame:GetShowDistanceThreshold()
-    local threshold = self:GetProfile().ShowDistanceThreshold
-    return self:IsEnemy() and threshold.Hostile or threshold.Friendly
-end
-
-function HMUnitFrame:GetOutOfRangeThreshold()
-    local threshold = self:GetProfile().OutOfRangeThreshold
-    return self:IsEnemy() and threshold.Hostile or threshold.Friendly
-end
-
 function HMUnitFrame:UpdateRange()
     local wasInRange = self.inRange
     self.distance = self:GetCache():GetDistance()
-    self.inRange = math.ceil(self.distance) < self:GetOutOfRangeThreshold()
+    self.inRange = self.distance <= 40
     if wasInRange ~= self.inRange then
         self:UpdateOpacity()
     end
@@ -230,11 +220,11 @@ function HMUnitFrame:UpdateRangeText()
     local dist = math.ceil(self.distance)
     local distanceText = self.distanceText
     local text = ""
-    if dist >= (preciseDistance and self:GetShowDistanceThreshold() or 28) and dist < 9999 then
+    if dist >= (preciseDistance and 20) and dist < 9999 then
         local r, g, b
         if dist > 80 then
             r, g, b = 0.75, 0.75, 0.75
-        elseif dist >= self:GetOutOfRangeThreshold() then
+        elseif dist > 40 then
             r, g, b = 1, 0.3, 0.3
         else
             r, g, b = 1, 0.6, 0
@@ -298,7 +288,7 @@ end
 function HMUnitFrame:SetOutlineColor(r, g, b)
     if r then
         self.targetOutline:Show()
-        self.targetOutline:SetBackdropBorderColor(r, g, b, 0.75)
+        self.targetOutline:SetBackdropBorderColor(r, g, b, 0.4)
     else
         self.targetOutline:Hide()
     end
@@ -467,7 +457,8 @@ function HMUnitFrame:UpdateHealth()
 
     if not UnitIsConnected(unit) and (not fake or not fakeOnline) then
         self.nameText:SetText(self:ColorizeText(unitName, profile.NameText.Color))
-        self.healthText:SetText(util.Colorize("Offline", 0.7, 0.7, 0.7))
+		--self.nameText:SetText(string.sub(unitName, 1, 3))
+        self.healthText:SetText(util.Colorize("-", 0.7, 0.7, 0.7))
         self.missingHealthText:SetText("")
         self:SetHealthBarValue(0)
         self.powerBar:SetValue(0)
@@ -605,7 +596,7 @@ function HMUnitFrame:UpdateHealth()
     self:AdjustHealthPosition()
 end
 
-local greenToRedColors = {{1, 0, 0}, {1, 0.3, 0}, {1, 1, 0}, {0.6, 0.92, 0}, {0, 0.8, 0}}
+local greenToRedColors = {{1, 0, 0}, {1, 0.3, 0}, {1, 1, 0}, {0.4, 0.7, 0}, {0, 0, 0}}
 function HMUnitFrame:SetHealthBarValue(value)
     local unit = self.unit
     local healthBar = self.healthBar
@@ -618,7 +609,9 @@ function HMUnitFrame:SetHealthBarValue(value)
     local enemy = self:IsEnemy()
 
     healthBar:SetValue(value)
-
+	--incomingHealText:SetFont("Interface\\AddOns\\HealersMate\\fonts\\BigNoodleTitling.ttf", 14, outline)
+	--overriding the default healing text settings
+	
     local healthIncMaxRatio = 0
     local healthIncDirectMaxRatio = 0
 
@@ -664,10 +657,6 @@ function HMUnitFrame:SetHealthBarValue(value)
     
     if profile.ShowDebuffColorsOn == "Health Bar" then
         r, g, b = self:GetDebuffColor()
-    end
-
-    if UnitIsCharmed(unit) and enemy then
-        r, g, b = 0.25, 0.25, 0.25
     end
     
     if r == nil then -- If there's no debuff color, proceed to normal colors
@@ -815,7 +804,7 @@ function HMUnitFrame:AllocateAura()
                 return
             end
             self:SetText(seconds <= 60 and seconds or math.ceil(seconds / 60).."m")
-            self:SetFont("Fonts\\FRIZQT__.TTF", math.ceil(frame:GetHeight() * 
+            self:SetFont("Interface\\AddOns\\HealersMate\\fonts\\BigNoodleTitling.ttf", math.ceil(frame:GetHeight() * 
                 (seconds < 540 and (seconds < 10 and 0.6 or 0.45) or 0.35)), "OUTLINE")
         end
         duration.UpdateText = function()
@@ -1093,7 +1082,7 @@ function HMUnitFrame:CreateAura(aura, name, index, texturePath, stacks, xOffset,
     if stacks > 1 then
         local stackText = aura.stackText
         stackText:SetPoint("CENTER", frame, "CENTER", 0, 0)
-        stackText:SetFont("Fonts\\FRIZQT__.TTF", math.ceil(size * (stacks < 10 and 0.75 or 0.6)))
+        stackText:SetFont("Interface\\AddOns\\HealersMate\\fonts\\BigNoodleTitling.ttf", math.ceil(size * (stacks < 10 and 0.75 or 0.6)))
         stackText:SetText(stacks)
     end
 
@@ -1263,17 +1252,7 @@ function HMUnitFrame:Initialize()
         self:AdjustHealthPosition()
     end)
     button:SetScript("OnEnter", function()
-        local attachTooltipTo
-        if HMOptions.SpellsTooltip.AttachTo == "Frame" then
-            attachTooltipTo = self.rootContainer
-        elseif HMOptions.SpellsTooltip.AttachTo == "Group" then
-            attachTooltipTo = self.owningGroup:GetContainer()
-        elseif HMOptions.SpellsTooltip.AttachTo == "Screen" then
-            attachTooltipTo = UIParent
-        else
-            attachTooltipTo = self.button
-        end
-        HM.ApplySpellsTooltip(attachTooltipTo, unit, self.button)
+        HM.ApplySpellsTooltip(button, unit)
         self.hovered = true
         self:UpdateHealth()
         if HMOptions.SetMouseover and util.IsSuperWowPresent() then
@@ -1468,7 +1447,7 @@ function HMUnitFrame:UpdateComponent(component, props, xOffset, yOffset)
     if component.SetFont then -- Must be a FontString
         component:SetWidth(math.min(props.MaxWidth, anchor:GetWidth()))
         component:SetHeight(props.FontSize * 1.25)
-        component:SetFont("Fonts\\FRIZQT__.TTF", props.FontSize, props.Outline and "OUTLINE" or nil)
+        component:SetFont("Interface\\AddOns\\HealersMate\\fonts\\BigNoodleTitling.ttf", props.FontSize, props.Outline and "OUTLINE" or nil)
         if props.Outline then
             component:SetShadowOffset(0, 0)
         end
