@@ -84,10 +84,6 @@ function HealersMateSettings.SetDefaults()
             },
             ["SpellsTooltip"] = {
                 ["Enabled"] = isHealer,
-                ["AttachTo"] = "Button", -- "Button", "Frame", "Group", "Screen"
-                ["OffsetX"] = 0,
-                ["OffsetY"] = 0,
-                ["Anchor"] = "Top Right", -- "Top Left", "Top Right", "Bottom Left", "Bottom Right"
                 ["ShowManaCost"] = false,
                 ["ShowManaPercentCost"] = true,
                 ["HideCastsAbove"] = 3,
@@ -106,7 +102,6 @@ function HealersMateSettings.SetDefaults()
             ["AutoResurrect"] = HealersMate.ResurrectionSpells[util.GetClass("player")] ~= nil,
             ["UseHealPredictions"] = true,
             ["SetMouseover"] = true,
-            ["LFTAutoRole"] = true, -- Turtle WoW
             ["TestUI"] = false,
             ["Hidden"] = false,
             ["ChosenProfiles"] = {
@@ -212,7 +207,7 @@ do
     -- Tracked buffs for all classes
     local defaultTrackedBuffs = {
         "Blessing of Protection", "Hand of Protection", "Divine Protection", "Divine Shield", "Divine Intervention", -- Paladin
-            "Bulwark of the Righteous", "Blessing of Sacrifice", "Hand of Sacrifice",
+            "Bulwark of the Righteous", "Hand of Sacrifice",
         "Power Infusion", "Spirit of Redemption", "Inner Focus", "Abolish Disease", "Power Word: Shield", -- Priest
         "Shield Wall", "Recklessness", "Last Stand", -- Warrior
         "Evasion", "Vanish", -- Rogue
@@ -226,9 +221,9 @@ do
     -- Tracked buffs for specific classes
     local defaultClassTrackedBuffs = {
         ["PALADIN"] = {"Blessing of Wisdom", "Blessing of Might", "Blessing of Salvation", "Blessing of Sanctuary", 
-            "Blessing of Kings", "Blessing of Light", "Greater Blessing of Wisdom", "Greater Blessing of Might", 
-            "Greater Blessing of Salvation", "Greater Blessing of Sanctuary", "Greater Blessing of Kings", "Greater Blessing of Light", "Daybreak", 
-            "Blessing of Freedom", "Hand of Freedom", "Redoubt", "Holy Shield"},
+            "Blessing of Kings", "Greater Blessing of Wisdom", "Greater Blessing of Might", "Blessing of Light",
+            "Greater Blessing of Salvation", "Greater Blessing of Sanctuary", "Greater Blessing of Kings", "Daybreak", 
+            "Holy Power", "Hand of Freedom", "Greater Blessing of Light", "Holy Shield"},
         ["PRIEST"] = {"Prayer of Fortitude", "Power Word: Fortitude", "Prayer of Spirit", "Divine Spirit", 
             "Prayer of Shadow Protection", "Shadow Protection", "Holy Champion", "Champion's Grace", "Empower Champion", 
             "Fear Ward", "Inner Fire", "Renew", "Lightwell Renew", "Inspiration", 
@@ -324,8 +319,8 @@ function InitSettings()
             MyTooltip:AddLine(TooltipText2, 0.5, 1, 0.5)
         end
             
-        HMSettingsInfoTooltipTextLeft1:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
-        HMSettingsInfoTooltipTextLeft2:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
+        HMSettingsInfoTooltipTextLeft1:SetFont("Interface\\AddOns\\HealersMate\\fonts\\BigNoodleTitling.ttf", 12, "OUTLINE")
+        HMSettingsInfoTooltipTextLeft2:SetFont("Interface\\AddOns\\HealersMate\\fonts\\BigNoodleTitling.ttf", 10, "OUTLINE")
         
         MyTooltip:Show()
     end
@@ -472,7 +467,7 @@ function InitSettings()
     do
         local TargetSettingsLabel = optionsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         TargetSettingsLabel:SetPoint("TOPLEFT", optionsFrame, "TOPLEFT", 0, yOffset)
-        TargetSettingsLabel:SetFont("Fonts\\FRIZQT__.TTF", 14)
+        TargetSettingsLabel:SetFont("Interface\\AddOns\\HealersMate\\fonts\\BigNoodleTitling.ttf", 14)
         TargetSettingsLabel:SetWidth(optionsFrame:GetWidth())
         TargetSettingsLabel:SetJustifyH("CENTER")
         TargetSettingsLabel:SetText("Target Settings")
@@ -563,7 +558,7 @@ function InitSettings()
     do
         local CastingSettingsLabel = optionsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         CastingSettingsLabel:SetPoint("TOPLEFT", optionsFrame, "TOPLEFT", 0, yOffset)
-        CastingSettingsLabel:SetFont("Fonts\\FRIZQT__.TTF", 14)
+        CastingSettingsLabel:SetFont("Interface\\AddOns\\HealersMate\\fonts\\BigNoodleTitling.ttf", 14)
         CastingSettingsLabel:SetWidth(optionsFrame:GetWidth())
         CastingSettingsLabel:SetJustifyH("CENTER")
         CastingSettingsLabel:SetText("Casting Settings")
@@ -633,7 +628,7 @@ function InitSettings()
     do
         local SpellsTooltipSettingsLabel = optionsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         SpellsTooltipSettingsLabel:SetPoint("TOPLEFT", optionsFrame, "TOPLEFT", 0, yOffset)
-        SpellsTooltipSettingsLabel:SetFont("Fonts\\FRIZQT__.TTF", 14)
+        SpellsTooltipSettingsLabel:SetFont("Interface\\AddOns\\HealersMate\\fonts\\BigNoodleTitling.ttf", 14)
         SpellsTooltipSettingsLabel:SetWidth(optionsFrame:GetWidth())
         SpellsTooltipSettingsLabel:SetJustifyH("CENTER")
         SpellsTooltipSettingsLabel:SetText("Spells Tooltip Settings")
@@ -845,83 +840,9 @@ function InitSettings()
     yOffset = yOffset - 30
 
     do
-        local attachToDropdown = CreateFrame("Frame", "$parentAttachToDropdown", optionsFrame, "UIDropDownMenuTemplate")
-        attachToDropdown:Show()
-        --castWhenDropdown:SetPoint("TOP", -65, -100)
-        attachToDropdown:SetPoint("RIGHT", optionsFrame, "TOPLEFT", xOffset + xDropdownOffset, yOffset + yDropdownOffset)
-
-        local label = optionsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        label:SetPoint("RIGHT", attachToDropdown, "RIGHT", -30, 5)
-        label:SetText("Attach To")
-
-        local states = {"Button", "Frame", "Group", "Screen"}
-        local options = {}
-
-        for _, key in ipairs(states) do
-            table.insert(options, {
-                text = key,
-                arg1 = key,
-                func = function(targetArg)
-                    UIDropDownMenu_SetSelectedName(attachToDropdown, targetArg, false)
-                    HMOptions.SpellsTooltip.AttachTo = targetArg
-                end
-            })
-        end
-
-        UIDropDownMenu_Initialize(attachToDropdown, function(self, level)
-            for _, targetOption in ipairs(options) do
-                targetOption.checked = false
-                UIDropDownMenu_AddButton(targetOption)
-            end
-            if UIDropDownMenu_GetSelectedName(attachToDropdown) == nil then
-                UIDropDownMenu_SetSelectedName(attachToDropdown, HMOptions.SpellsTooltip.AttachTo, false)
-            end
-        end)
-    end
-
-    yOffset = yOffset - 25
-
-    do
-        local anchorDropdown = CreateFrame("Frame", "$parentAnchorDropdown", optionsFrame, "UIDropDownMenuTemplate")
-        anchorDropdown:Show()
-        --castWhenDropdown:SetPoint("TOP", -65, -100)
-        anchorDropdown:SetPoint("RIGHT", optionsFrame, "TOPLEFT", xOffset + xDropdownOffset, yOffset + yDropdownOffset)
-
-        local label = optionsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        label:SetPoint("RIGHT", anchorDropdown, "RIGHT", -30, 5)
-        label:SetText("Anchor")
-
-        local states = {"Top Left", "Top Right", "Bottom Left", "Bottom Right"}
-        local options = {}
-
-        for _, key in ipairs(states) do
-            table.insert(options, {
-                text = key,
-                arg1 = key,
-                func = function(targetArg)
-                    UIDropDownMenu_SetSelectedName(anchorDropdown, targetArg, false)
-                    HMOptions.SpellsTooltip.Anchor = targetArg
-                end
-            })
-        end
-
-        UIDropDownMenu_Initialize(anchorDropdown, function(self, level)
-            for _, targetOption in ipairs(options) do
-                targetOption.checked = false
-                UIDropDownMenu_AddButton(targetOption)
-            end
-            if UIDropDownMenu_GetSelectedName(anchorDropdown) == nil then
-                UIDropDownMenu_SetSelectedName(anchorDropdown, HMOptions.SpellsTooltip.Anchor, false)
-            end
-        end)
-    end
-
-    yOffset = yOffset - 30
-
-    do
         local OtherSettingsLabel = optionsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         OtherSettingsLabel:SetPoint("TOPLEFT", optionsFrame, "TOPLEFT", 0, yOffset)
-        OtherSettingsLabel:SetFont("Fonts\\FRIZQT__.TTF", 14)
+        OtherSettingsLabel:SetFont("Interface\\AddOns\\HealersMate\\fonts\\BigNoodleTitling.ttf", 14)
         OtherSettingsLabel:SetWidth(optionsFrame:GetWidth())
         OtherSettingsLabel:SetJustifyH("CENTER")
         OtherSettingsLabel:SetText("Other Settings")
@@ -1042,46 +963,13 @@ function InitSettings()
         ApplyTooltip(CheckboxInRaid, "Hide default party frames while in raid", "This may cause issues with other addons")
     end
 
-    if util.IsTurtleWow() then
-        yOffset = yOffset - 40
-
-        do
-            local TurtleWoWLabel = optionsFrame:CreateFontString("$parentSuperWoWLabel", "OVERLAY", "GameFontNormal")
-            TurtleWoWLabel:SetPoint("TOPLEFT", optionsFrame, "TOPLEFT", 0, yOffset)
-            TurtleWoWLabel:SetFont("Fonts\\FRIZQT__.TTF", 14)
-            TurtleWoWLabel:SetWidth(optionsFrame:GetWidth())
-            TurtleWoWLabel:SetJustifyH("CENTER")
-            TurtleWoWLabel:SetText("Turtle WoW Settings")
-        end
-
-        yOffset = yOffset - 30
-
-        do
-            local LFTAutoRoleLabel = optionsFrame:CreateFontString("$parentMouseoverLabel", "OVERLAY", "GameFontNormal")
-            LFTAutoRoleLabel:SetPoint("RIGHT", optionsFrame, "TOPLEFT", xOffset, yOffset)
-            LFTAutoRoleLabel:SetText("LFT Auto Role")
-
-            local CheckboxLFTAutoRole = CreateFrame("CheckButton", "$parentMouseover", optionsFrame, "UICheckButtonTemplate")
-            CheckboxLFTAutoRole:SetPoint("LEFT", LFTAutoRoleLabel, "RIGHT", 5, yCheckboxOffset)
-            CheckboxLFTAutoRole:SetWidth(20)
-            CheckboxLFTAutoRole:SetHeight(20)
-            CheckboxLFTAutoRole:SetChecked(HMOptions.LFTAutoRole)
-            CheckboxLFTAutoRole:SetScript("OnClick", function()
-                HMOptions.LFTAutoRole = CheckboxLFTAutoRole:GetChecked() == 1
-                HealersMate.SetLFTAutoRoleEnabled(HMOptions.LFTAutoRole)
-            end)
-            ApplyTooltip(CheckboxLFTAutoRole, "Automatically assign roles when joining LFT groups", 
-                "This functionality was created for 1.17.2 and may break in future updates")
-        end
-    end
-
     yOffset = yOffset - 40
 
     local superwow = util.IsSuperWowPresent()
     do
         local SuperWoWLabel = optionsFrame:CreateFontString("$parentSuperWoWLabel", "OVERLAY", "GameFontNormal")
         SuperWoWLabel:SetPoint("TOPLEFT", optionsFrame, "TOPLEFT", 0, yOffset)
-        SuperWoWLabel:SetFont("Fonts\\FRIZQT__.TTF", 14)
+        SuperWoWLabel:SetFont("Interface\\AddOns\\HealersMate\\fonts\\BigNoodleTitling.ttf", 14)
         SuperWoWLabel:SetWidth(optionsFrame:GetWidth())
         SuperWoWLabel:SetJustifyH("CENTER")
         SuperWoWLabel:SetText("SuperWoW Required Settings")
@@ -1090,7 +978,7 @@ function InitSettings()
 
         local SuperWoWDetectedLabel = optionsFrame:CreateFontString("$parentSuperWoWDetectedLabel", "OVERLAY", "GameFontNormal")
         SuperWoWDetectedLabel:SetPoint("TOPLEFT", optionsFrame, "TOPLEFT", 0, yOffset)
-        SuperWoWDetectedLabel:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
+        SuperWoWDetectedLabel:SetFont("Interface\\AddOns\\HealersMate\\fonts\\BigNoodleTitling.ttf", 10, "OUTLINE")
         SuperWoWDetectedLabel:SetWidth(optionsFrame:GetWidth())
         SuperWoWDetectedLabel:SetJustifyH("CENTER")
         SuperWoWDetectedLabel:SetText(superwow and util.Colorize("SuperWoW Detected", 0.5, 1, 0.5) or 
@@ -1141,7 +1029,7 @@ function InitSettings()
     do
         local frameStyle = customizeFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         frameStyle:SetPoint("TOP", 0, 0)
-        frameStyle:SetFont("Fonts\\FRIZQT__.TTF", 14)
+        frameStyle:SetFont("Interface\\AddOns\\HealersMate\\fonts\\BigNoodleTitling.ttf", 14)
         frameStyle:SetWidth(customizeFrame:GetWidth())
         frameStyle:SetJustifyH("CENTER")
         frameStyle:SetText("Choose Frame Style")
@@ -1279,7 +1167,7 @@ function InitSettings()
     do
         local advanced = customizeFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         advanced:SetPoint("TOP", 0, -240)
-        advanced:SetFont("Fonts\\FRIZQT__.TTF", 14)
+        advanced:SetFont("Interface\\AddOns\\HealersMate\\fonts\\BigNoodleTitling.ttf", 14)
         advanced:SetWidth(customizeFrame:GetWidth())
         advanced:SetJustifyH("CENTER")
         advanced:SetText("Advanced Options")
@@ -1288,7 +1176,7 @@ function InitSettings()
     do
         local explainer = customizeFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         explainer:SetPoint("TOP", 0, -260)
-        explainer:SetFont("Fonts\\FRIZQT__.TTF", 12)
+        explainer:SetFont("Interface\\AddOns\\HealersMate\\fonts\\BigNoodleTitling.ttf", 12)
         explainer:SetWidth(customizeFrame:GetWidth() * 0.85)
         explainer:SetJustifyH("CENTER")
         explainer:SetText("The Load Script runs after profiles are initialized, but before UIs are created, "..
@@ -1352,7 +1240,7 @@ function InitSettings()
         
         local editTargetLabel = editFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         editTargetLabel:SetPoint("TOP", 0, -207)
-        editTargetLabel:SetFont("Fonts\\FRIZQT__.TTF", 12)
+        editTargetLabel:SetFont("Interface\\AddOns\\HealersMate\\fonts\\BigNoodleTitling.ttf", 12)
         editTargetLabel:SetWidth(editFrame:GetWidth())
         editTargetLabel:SetJustifyH("CENTER")
 
@@ -1651,14 +1539,14 @@ function InitSettings()
         do
             local explainerHeader = helpFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             explainerHeader:SetPoint("TOP", 0, 0)
-            explainerHeader:SetFont("Fonts\\FRIZQT__.TTF", 14)
+            explainerHeader:SetFont("Interface\\AddOns\\HealersMate\\fonts\\BigNoodleTitling.ttf", 14)
             explainerHeader:SetWidth(helpFrame:GetWidth() * 1)
             explainerHeader:SetJustifyH("CENTER")
             explainerHeader:SetText("Spell Binding Help & Info")
 
             local explainer = helpFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             explainer:SetPoint("TOP", 0, -20)
-            explainer:SetFont("Fonts\\FRIZQT__.TTF", 12)
+            explainer:SetFont("Interface\\AddOns\\HealersMate\\fonts\\BigNoodleTitling.ttf", 12)
             explainer:SetWidth(helpFrame:GetWidth() * 0.9)
             explainer:SetJustifyH("LEFT")
             local colorize = util.Colorize
